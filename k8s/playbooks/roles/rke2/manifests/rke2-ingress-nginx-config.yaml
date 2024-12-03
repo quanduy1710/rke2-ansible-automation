@@ -1,0 +1,27 @@
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: rke2-ingress-nginx
+  namespace: kube-system
+spec:
+  valuesContent: |-
+    controller:
+      publishService:
+        enabled: true
+      service:
+        enabled: true
+        type: LoadBalancer
+        externalIPs:
+        - $VIP            #Kube-vip virtual IP address
+        ports:
+          http: 80
+          https: 443
+      metrics:
+        service:
+          annotations:
+            prometheus.io/scrape: "true"
+            prometheus.io/port: "10254"
+      config:
+        use-forwarded-headers: "true"
+        allow-snippet-annotations: "true"

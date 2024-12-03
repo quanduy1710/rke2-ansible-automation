@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+if [[ ${DEBUG:-false} == "true" ]]; then
+    set -o xtrace
+fi
+
+usage() {
+cat <<EOF
+  Usage: $0 --rke2_version RKE2_VERSION --os_version RKE2_OS_VERSION [--download_path ARTIFACTS_DIR] [--arch ARCHITECTURE] [--clone]
+EOF
+    exit 1
+}
+
+# parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --rke2_version)
+            RKE2_VERSION="$2" && shift 2 ;;
+        --os_version)
+            RKE2_OS_VERSION="$2" && shift 2 ;;
+        --arch)
+            RKE2_ARCH="$2" && shift 2 ;;
+        --download_path)
+            RKE2_DOWNLOAD_PATH="$2" && shift 2 ;;
+        --clone)
+            CLONE=1 && shift ;;
+        *)
+            echo "Unknown option: $1"
+            usage ;;
+    esac
+done
+
+[ "$RKE2_VERSION" ] || usage
+[ "$RKE2_OS_VERSION" ] || usage
+[ "$RKE2_ARCH" ] || RKE2_ARCH="amd64"
+[ "$RKE2_DOWNLOAD_PATH" ] || RKE2_DOWNLOAD_PATH="/tmp/rke2/artifacts"
+
+RKE2_DOWNLOAD_PATH="${RKE2_DOWNLOAD_PATH}/${RKE2_VERSION}"
+
+mkdir -p $RKE2_DOWNLOAD_PATH
+
+# RKE2 artifacts
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/sha256sum-${RKE2_ARCH}.txt
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/rke2.linux-${RKE2_ARCH}.tar.gz
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/rke2-images-core.linux-${RKE2_ARCH}.tar.zst
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/rke2-images.linux-${RKE2_ARCH}.tar.zst
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/rke2-images-calico.linux-${RKE2_ARCH}.tar.zst
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/rke2-images-multus.linux-${RKE2_ARCH}.tar.zst
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/kube-vip-images.tar.gz
+wget -P $RKE2_DOWNLOAD_PATH https://repo.domain/repository/rke2/${RKE2_VERSION}/rke2.sh

@@ -1,0 +1,99 @@
+---
+stages:
+  - tests
+  - deploy
+
+variables:
+  RKE2_VERSION: v1.25.12
+  RKE2_OS_VERSION: linux
+  RKE2_ARCH: amd64
+  RKE2_DOWNLOAD_PATH: roles/rke2/files/artifacts
+  ANSIBLE_INVENTORY: ./inventory/k8s-shared-cluster/inventory.ini
+  ANSIBLE_KEY_FILE: ~/.ssh/gitops
+  ANSIBLE_PLAYBOOK: ./playbooks/rke2-cluster.yml
+  ANSIBLE_CONFIG: ./ansible.cfg
+  ANSIBLE_FORCE_COLOR: "true"
+  ANSIBLE_KEEP_REMOTE_FILES: "1"
+  ANSIBLE_LOG_LEVEL: "-vv"
+
+  PIPELINE_IMAGE: "$CI_REGISTRY_IMAGE/pipeline:latest"
+
+  ANSIBLE_REMOTE_USER: admin
+
+before_script:
+  - /bin/bash run_prepare.sh
+
+.job: &job
+  tags:
+    - k8s-shared
+  image: $PIPELINE_IMAGE
+  artifacts:
+    when: always
+    paths:
+      - cluster-dump/
+
+pre-commit:
+  extends: .job
+  stage: tests
+  tags: [k8s-shared]
+  variables:
+    LANG: C.UTF-8
+  script:
+    - pre-commit run --all-files
+  except: ['main', 'master']
+
+yamllint:
+  extends: .job
+  stage: tests
+  tags: [k8s-shared]
+  variables:
+    LANG: C.UTF-8
+  script:
+    - yamllint --strict .
+  except: ['main', 'master']
+
+shellcheck:
+  extends: .job
+  stage: tests
+  tags: [k8s-shared]
+  variables:
+    SHELLCHECK_VERSION: v0.7.1
+  before_script:
+    - curl --silent --location "https://github.com/koalaman/shellcheck/releases/download/"${SHELLCHECK_VERSION}"/shellcheck-"${SHELLCHECK_VERSION}".linux.x86_64.tar.xz" | tar -xJv
+    - cp shellcheck-"${SHELLCHECK_VERSION}"/shellcheck /usr/bin/
+    - shellcheck --version
+  script:
+    # Run shellcheck for all *.sh
+    - find . -name '*.sh' -not -path './.git/*' | xargs shellcheck --severity error
+  except: ['main', 'master']
+
+ansible-lint:
+  extends: .job
+  stage: tests
+  tags: [k8s-shared]
+  script:
+    - ansible-lint playbooks/*.yml
+  except: ['main', 'master']
+
+syntax-check:
+  extends: .job
+  stage: tests
+  tags: [k8s-shared]
+  variables:
+    ANSIBLE_INVENTORY: ./ansible.cfg
+    ANSIBLE_REMOTE_USER: admin
+    ANSIBLE_BECOME: "true"
+    ANSIBLE_BECOME_USER: root
+    ANSIBLE_VERBOSITY: "3"
+  script:
+    - ansible-playbook --syntax-check playbooks/*.yml
+  except: ['main', 'master']
+
+
+ansible-deploy:
+  extends: .job
+  stage: deploy
+  tags: [k8s-shared]
+  script:
+    - /bin/bash run_ansible.sh
+

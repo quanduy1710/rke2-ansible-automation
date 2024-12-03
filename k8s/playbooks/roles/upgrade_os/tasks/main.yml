@@ -1,0 +1,39 @@
+---
+- name: Upgrade OS packages
+  block:
+    - name: Upgrade the OS packages and configuration files
+      ansible.builtin.shell: |
+        set -e
+        set -o pipefail
+        use_proxy=yes && export http_proxy=http://10.56.224.108:3128 && export https_proxy=http://10.56.224.108:3128 && subscription-manager register --username --password 14081988aA@ --auto-attach --force
+        yum clean all
+        yum update -y
+        reboot
+      args:
+        executable: /bin/bash
+      changed_when: false
+      # run_once: true
+      # retries: 5
+      register: rke2_nodes_summary
+
+    - name: RKE2 nodes state
+      ansible.builtin.debug:
+        var: rke2_nodes_summary.stdout_lines
+      # run_once: true
+
+# - name: Wait for the server be ready
+#   ansible.builtin.shell: |
+#     set -o pipefail
+#     uname -a
+#   args:
+#     executable: /bin/bash
+#   changed_when: false
+#   register: server
+#   until:
+#     '" Linux " in server.stdout'
+#   retries: 10
+#   delay: 15
+
+
+
+

@@ -1,0 +1,3 @@
+rke2_type: server
+rke2_token: rke2_cluster_admin_token
+rke2_agent_token: rke2_agent_admin_token

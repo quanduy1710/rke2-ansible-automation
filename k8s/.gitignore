@@ -1,0 +1,4 @@
+.cache
+.vscode
+.idea
+roles/rke2/files

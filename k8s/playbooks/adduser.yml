@@ -1,0 +1,34 @@
+---
+- name: Check ansible version
+  import_playbook: ansible_version.yml
+
+- name: Add user
+  hosts: k8s_cluster
+  become: yes
+  vars_prompt:
+    name: "adduser_confirmation"
+    prompt: "Are you sure you want to add user? Type 'yes' to add user your VM."
+    default: "no"
+    private: no
+
+  pre_tasks:
+    - name: check confirmation
+      fail:
+        msg: "Add user confirmation failed"
+      when: adduser_confirmation != "yes"
+
+  vars:
+    adduser_user_name: admin
+    adduser_user_comments: ""
+    adduser_sudoroot: true
+    adduser_sudoroot_nopasswd: true
+    adduser_sudoroot_nopasswd_cmd: 'ALL'
+    adduser_shell: '/bin/bash'
+    adduser_password_update: always
+    adduser_password: '$5$PG9MmfOf608OMVZE$VX2MSTj56U9suEIwM9Myz/8Db5y/wRelSv4K96rHL8A'
+    # adduser_expires: 1704070800
+    adduser_public_keys:
+      - ansible.pub
+
+  roles:
+     - role: adduser

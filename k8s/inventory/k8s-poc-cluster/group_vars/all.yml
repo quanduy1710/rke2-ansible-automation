@@ -1,0 +1,87 @@
+---
+# HA
+rke2_ha_mode: true
+rke2_ha_mode_kubevip: false
+rke2_ha_mode_keepalived: false
+
+# Air-Gap Install
+rke2_airgap_mode: true
+rke2_airgap_implementation: copy
+rke2_additional_sans:
+  - pek8s.vn
+  - pek8s.vn
+rke2_cni:
+  - calico
+
+rke2_channel: stable
+rke2_version: v1.28.12+rke2r1
+rke2_data_path: /var/lib/rancher/rke2
+rke2_artifact_path: "{{ rke2_data_path }}/artifacts"
+rke2_airgap_copy_sourcepath: files/artifacts/v1.28.12
+rke2_architecture: amd64
+rke2_artifact:
+  - sha256sum-{{ rke2_architecture }}.txt
+  - rke2.linux-{{ rke2_architecture }}.tar.gz
+  - rke2-images.linux-{{ rke2_architecture }}.tar.zst
+  # - rke2-images-core.linux-{{ rke2_architecture }}.tar.zst
+
+# rke2_airgap_copy_additional_tarballs:
+  # - rke2-images-multus.linux-{{ rke2_architecture }}.tar.zst
+  # - rke2-images-calico.linux-{{ rke2_architecture }}.tar.zst
+  # - kube-vip-images.tar.gz
+
+rke2_custom_manifests:
+  - manifests/rke2-coredns-config.yaml
+  - manifests/rke2-ingress-nginx-config.yaml
+  #   - manifests/rke2-cilium-config.yaml
+
+rke2_kubevip_cloud_provider_enable: false
+rke2_api_ip: 10.26.148.100
+# rke2_api_port: 9345
+# rke2_interface: eth0
+
+rke2_download_kubeconf: true
+rke2_download_kubeconf_file_name: rke2.yaml
+rke2_download_kubeconf_path: /tmp
+
+rke2_server_node_taints:
+  - 'CriticalAddonsOnly=true:NoExecute'
+
+rke2_cluster_group_name: k8s_cluster
+rke2_servers_group_name: rke2_servers
+rke2_agents_group_name: rke2_agents
+
+# rke2_kubevip_svc_enable: true
+# rke2_loadbalancer_ip_range:
+#   - range-global: 10.26.129.20-10.26.129.50
+
+rke2_cis_profile: ""
+disable_kube_proxy: false
+
+rke2_disable:
+  - rke2-canal
+  - rke2-ingress-nginx
+  - disable-cloud-controller
+
+rke2_server_options:
+  - "etcd-expose-metrics: true"
+  - "disable-cloud-controller: true"
+  - "selinux: false"
+  - "cluster-cidr: 10.10.64.0/18"
+  - "service-cidr: 10.10.0.0/18"
+  - "cluster-dns: 10.10.0.10"
+  # - "cluster-domain: k8s.system.local"
+
+rke2_agent_options:
+  - "selinux: false"
+
+rke2_environment_options:
+  - "HTTP_PROXY="
+  - "HTTPS_PROXY="
+  - "NO_PROXY="
+  - "CONTAINERD_HTTP_PROXY="
+  - "CONTAINERD_HTTPS_PROXY="
+  - "CONTAINERD_NO_PROXY="
+
+rke2_drain_node_during_upgrade: true
+

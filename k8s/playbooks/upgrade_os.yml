@@ -1,0 +1,27 @@
+---
+- name: Check ansible version
+  import_playbook: ansible_version.yml
+
+- name: Upgrade OS packages
+  hosts: k8s_cluster
+  become: yes
+  # gather_facts: False
+  vars_prompt:
+    name: "upgrade_confirmation"
+    prompt: "Are you sure you want to upgrade packages? Type 'yes' to upgrade your packages."
+    default: "no"
+    private: no
+
+  pre_tasks:
+    - name: check confirmation
+      fail:
+        msg: "Upgrade confirmation failed"
+      when: upgrade_confirmation != "yes"
+
+  roles:
+  - role: rke2
+
+
+
+
+
